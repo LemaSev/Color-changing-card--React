@@ -2,14 +2,19 @@ import logo from './logo.svg';
 import './App.css';
 
 function App() {
+  const handleNameChange = () => {
+    const names = ['Bob', 'Kevin', 'James'];
+    const i = Math.floor(Math.random() * 3);
+    return names[i];
+  };
+
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Edit <code>src/App.js</code> and save to see changes.
+          Hello {handleNameChange()}!
         </p>
-          Learn React
       </header>
     </div>
   );
