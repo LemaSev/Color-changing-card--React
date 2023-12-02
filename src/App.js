@@ -14,45 +14,53 @@ function App() {
   const [fetchError,setFetchError] = useState(null);
   const [isLoading,setIsLoading] = useState(true);
 
+/* step 1. */
   useEffect(() => {
 
-    //1. fetch (items) from a special place (API_URL). 
-      const fetchItems = async() => {
+    // step 2. This is a task: fetch (items) from a special place (API_URL). 
+    const fetchItems = async() => {
+
+      /*  step 3. while you are getting the items, if something goes wrong, let me know, so I can stop waiting. */
       try {
-        const response = await fetch (API_URL);
-         /* 2. It goes to the API URL  and brings back a big list of items (response). */
 
+
+      /*  step 4: The helper goes to the store (API_URL) and asks for toys (items). It waits patiently for the store to respond. */
+      const response = await fetch (API_URL);
+     
+      /*  step 5: Your helper(fetch) checks if the store (API) is okay. If there's a problem,You want it to say exactly what happened. So, your helper says, "If something goes wrong, I'll tell you what went wrong."  */
         if (!response.ok) throw Error('Did not receive expected data');
-        //3. check if the items arrived safely, if not throw an an error message. If there's a problem,You want it to say exactly what happened. So, your helper says, "If something goes wrong, I'll tell you what went wrong."
-       
+        
+      /* step 6: Assuming everything is fine, your helper(fetch) takes the toys(items: listItems) out of the bag the store (API) gave. */
+      const listItems = await response.json();
+         
 
-        const listItems = await response.json();
-        /* 4.  Open the list and Show each item */ 
-    
-
-       /*  5.Put Items in item Box */
+       /* step 7: Put all the Items you got in a new box called "setItems" */
         setItems(listItems);
 
-       /*  6. if there is no error, reset and continue to show the items.  */
+       /* Step 8: If there was any problem before, you're saying, "Now everything is okay! No more problems. Forget about any issues we had before." */
         setFetchError(null);
-        
 
-      /*  7. Check for Errors and Tell If Something Goes Wrong */
+      /*   
+        step 9: If something went wrong at the store, your helper says,"Oh no, there's a problem! I'll tell you what happened so we can fix it." */
       } catch (err){
         setFetchError(err.message);
-      } finally{
+      } 
+      
+      /*  Step 10:  Whether everything went well or there was a problem, you tell your helper(fetch), "Now that you're back from the store, stop waiting(loading). I don't need your help anymore. */
+      finally{
         setIsLoading(false);
-       /* 8. it's like saying, "Whether there was a problem or everything went smoothly, we want to make sure that the loading indicator (isLoading) is turned off, */
       }
     };
-      /*  Start the Task Right Away. Your helper doesn't want to waste time. As soon as you ask for items, it goes to the store and
-        starts the special task. It doesn't wait around! */
+    
+      /*  Step 11:  This is like saying, "Wait for a little bit (2 seconds), and then go to the store and get some toys." It's like a delayed task for your helper. */
       setTimeout(() => {
           (async ()=> await fetchItems())();
         }, 2000)
       },[])
 
   
+
+      
 
   const addItem = (item) => {
     const id = items.length ? items[items.length - 1].id + 1 : 1;
