@@ -4,79 +4,108 @@ import AddItem from './AddItem';
 import Content from './Content';
 import Footer from './Footer';
 import { useState, useEffect } from 'react';
+import apiRequest from './apiRequest';
 
 function App() {
-  const API_URL ='http://localhost:3500/items'; //this is where we get our array information from. 
+  const API_URL = 'http://localhost:3500/items';
 
-  const [items, setItems] = useState ([]); //this is the array we want initially to load the application with. 
+  const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState('');
   const [search, setSearch] = useState('');
-  const [fetchError,setFetchError] = useState(null);
-  const [isLoading,setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-/* step 1. */
   useEffect(() => {
 
-    // step 2. This is a task: fetch (items) from a special place (API_URL). 
-    const fetchItems = async() => {
-
-      /*  step 3. while you are getting the items, if something goes wrong, let me know, so I can stop waiting. */
+    const fetchItems = async () => {
       try {
-
-
-      /*  step 4: The helper goes to the store (API_URL) and asks for toys (items). It waits patiently for the store to respond. */
-      const response = await fetch (API_URL);
-     
-      /*  step 5: Your helper(fetch) checks if the store (API) is okay. If there's a problem,You want it to say exactly what happened. So, your helper says, "If something goes wrong, I'll tell you what went wrong."  */
+        const response = await fetch(API_URL);
         if (!response.ok) throw Error('Did not receive expected data');
-        
-      /* step 6: Assuming everything is fine, your helper(fetch) takes the toys(items: listItems) out of the bag the store (API) gave. */
-      const listItems = await response.json();
-         
-
-       /* step 7: Put all the Items you got in a new box called "setItems" */
+        const listItems = await response.json();
         setItems(listItems);
-
-       /* Step 8: If there was any problem before, you're saying, "Now everything is okay! No more problems. Forget about any issues we had before." */
         setFetchError(null);
-
-      /*   
-        step 9: If something went wrong at the store, your helper says,"Oh no, there's a problem! I'll tell you what happened so we can fix it." */
-      } catch (err){
+      } catch (err) {
         setFetchError(err.message);
-      } 
-      
-      /*  Step 10:  Whether everything went well or there was a problem, you tell your helper(fetch), "Now that you're back from the store, stop waiting(loading). I don't need your help anymore. */
-      finally{
+      } finally {
         setIsLoading(false);
       }
-    };
-    
-      /*  Step 11:  This is like saying, "Wait for a little bit (2 seconds), and then go to the store and get some toys." It's like a delayed task for your helper. */
-      setTimeout(() => {
-          (async ()=> await fetchItems())();
-        }, 2000)
-      },[])
+    }
 
-  
+    setTimeout(() => fetchItems(), 2000);
 
-      
+  }, [])
 
-  const addItem = (item) => {
+  const addItem = async (item) => {
     const id = items.length ? items[items.length - 1].id + 1 : 1;
     const myNewItem = { id, checked: false, item };
     const listItems = [...items, myNewItem];
     setItems(listItems);
+
+    const postOptions = {/*  This creates an object named postOptions.  */
+      method: 'POST', /* specifies that the HTTP request method should be a POST request. After we add the items, the request should be made then.  */
+      headers: { /* is an object specifying the HTTP headers for the request. In this case, 
+      it includes a header for the content type, indicating that the request body is in JSON format. */
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(myNewItem)  /* is the data to be sent in the request body. myNewItem is assumed to be a JavaScript object, and JSON.stringify is used to convert it into a JSON-formatted string. */
+    }
+    const result = await apiRequest(API_URL, postOptions); 
+    /* This line declares a variable named result and assigns the result of an asynchronous API request to it.
+    It calls the apiRequest function (presumably defined elsewhere), 
+    passing API_URL as the URL and postOptions as the options for the POST request.
+    The await keyword is used to wait for the asynchronous operation to complete before moving to the next line */
+
+    if (result) setFetchError(result);
+
+   /*  After making the request, it checks if there was an error (result is truthy),
+    and if so, it sets the fetch error using the setFetchError function. */
   }
 
-  const handleCheck = (id) => {
+
+ /*  We're defining a function called handleCheck, and it can do some special tasks. 
+  The (id) part means we can tell it which specific thing we want it to work on. */
+  const handleCheck = async (id) => {
     const listItems = items.map((item) => item.id === id ? { ...item, checked: !item.checked } : item);
     setItems(listItems);
+
+  /*   We're working with a list of items, and we're updating one of them. 
+    If the item's ID matches the one we provided to the function, we change its "checked" status. Then, we update the overall list. */
+
+    const myItem = listItems.filter((item) => item.id === id);
+    const updateOptions = {
+      method: 'PATCH', /* the PATCH method is used to apply partial modifications to a resource. Instead of updating the entire resource */
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ checked: myItem[0].checked })
+    };
+/*     We're making a set of instructions to tell the computer,
+     "Hey, we changed something! Here are the details of what we changed." */
+
+
+    const reqUrl = `${API_URL}/${id}`;
+
+   /*  We're making a special address to tell the computer exactly where to find the thing we updated. 
+    It's like giving the computer a map to locate our change. */
+
+    const result = await apiRequest(reqUrl, updateOptions);
+
+/*     We're using a function called apiRequest to send our instructions and the location to the computer. 
+    We wait for the computer to finish its job before moving on. */
+
+    if (result) setFetchError(result);
+  /*   We check if the computer had any problems doing what we asked. If there's a problem, we let someone know (using setFetchError).
+     If everything went well, we don't need to worry. */
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     const listItems = items.filter((item) => item.id !== id);
     setItems(listItems);
+
+    const deleteOptions = { method: 'DELETE' };
+    const reqUrl = `${API_URL}/${id}`;
+    const result = await apiRequest(reqUrl, deleteOptions);
+    if (result) setFetchError(result);
   }
 
   const handleSubmit = (e) => {
@@ -98,27 +127,14 @@ function App() {
         search={search}
         setSearch={setSearch}
       />
-
       <main>
-        {/* if isLoading is true then display the message: Loading items */}
         {isLoading && <p>Loading Items...</p>}
-
-        {fetchError && /* This states "If there's a problem (fetchError), do the thing inside the parentheses." */(
-          <p style={{ color: "red" }}>
-
-            {`Error: ${fetchError}`} {/* Inside the message, it says,  "There's an error," and it shows you what the problem is (the fetchError). */}
-          </p>
-        )}
-
-
-        {/*  if there is no fetch error, and if we are not loading, then continue to display the content */}
-
+        {fetchError && <p style={{ color: "red" }}>{`Error: ${fetchError}`}</p>}
         {!fetchError && !isLoading && <Content
           items={items.filter(item => ((item.item).toLowerCase()).includes(search.toLowerCase()))}
           handleCheck={handleCheck}
           handleDelete={handleDelete}
-        />
-        }
+        />}
       </main>
       <Footer length={items.length} />
     </div>
